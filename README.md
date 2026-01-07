@@ -32,7 +32,7 @@ direwolf -c direwolf.conf
 
 on second terminal run
 ```bash
-sox -d -r 44100 -c 1 /tmp/null
+sox -d -r 44100 -c 1 /tmp/test.wav
 ```
 
 on third terminal run
