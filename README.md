@@ -8,7 +8,7 @@ sudo apt update
 sudo apt install python3 direwolf sox git pavucontrol
 ```
 ### Optional:
-#### install SSDV. look at [this link for detailed howto](https://github.com/daniestevez/ssdv)
+#### install SSDV. look at [this link for detailed](https://github.com/daniestevez/ssdv)
 ```bash
 git clone https://github.com/daniestevez/ssdv
 cd ssdv
