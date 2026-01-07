@@ -4,7 +4,8 @@ Create AFSK 1200 modulated WAV audio from a binary file to be transmitted via a 
 ### Dependencies:
 Debian/Ubuntu Linux
 ```bash
-sudo apt install python3 direwolf sox github pavucontrol
+sudo apt update
+sudo apt install python3 direwolf sox git pavucontrol
 ```
 ### Optional:
 install ssdv. look at [this link for detailed howto](https://github.com/daniestevez/ssdv)
