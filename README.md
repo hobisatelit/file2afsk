@@ -57,7 +57,7 @@ cd ~/file2afsk
 cd ~/file2afsk
 ./rx.py
 ```
-play your recorded wav file or SDR, and the rx.py script will detect the file inside the sound. when finish, prest ctrl+c. the binary file will be saved as .bin file in same directory
+play your recorded wav file or SDR, and the **rx.py** script will detect the file inside the sound. when finish, prest Ctrl+C. the binary file will be saved as .bin file in same directory
 
 ### How to encode JPG file into SSDV bin
 ```bash
