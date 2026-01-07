@@ -39,7 +39,7 @@ on third terminal run
 ```bash
 pavucontrol
 ```
-look at recording tab, you will see direwolf app and sox there, please change capture to monitor mode both of them. and then you can close both app with press ctrl+c on each.
+look at **Recording** tab, you will see **direwolf** app and **sox** there, please change capture to **MONITOR** mode both of them. and then you can close both app with press Ctrl+C on each terminal.
 
 ### How to convert file into WAV  
 Run Direwolf KISS server
