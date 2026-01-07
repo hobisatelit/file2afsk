@@ -32,7 +32,7 @@ direwolf -c direwolf.conf
 
 on second terminal run
 ```bash
-sox -d -r 44100 -c 1 output.wav
+sox -d -r 44100 -c 1 /dev/null
 ```
 
 on third terminal run
