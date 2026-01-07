@@ -17,7 +17,27 @@ git clone https://github.com/hobisatelit/file2afsk.git && cd file2afsk
 chmod 755 tx.py rx.py
 ```
 ### Configuration:
+#### Config Callsigner
 edit tx.py, change SRC_CALL = "ABC" with your actual callsigner 
+#### Config Pavucontrol
+You only need to set this up once. The goal is for the sox application (audio recorder) and direwolf (KISS server) to be able to listen to the audio output from the speakers or line out of the computer.
+
+Run Direwolf KISS server
+```bash
+cd ~/file2afsk
+direwolf -c direwolf.conf
+```
+
+on second terminal run
+```bash
+sox -d -r 44100 -c 1 output.wav
+```
+
+on third terminal run
+```bash
+pavucontrol
+```
+look at recording tab, you will see direwolf app and sox there, please change capture to monitor mode both of them. and then you can close both app with press ctrl+c on each.
 
 ### How to convert file into WAV  
 Run Direwolf KISS server
@@ -31,12 +51,6 @@ cd ~/file2afsk
 ./tx.py image.bin
 ```
 ### How to convert WAV into file
-make sure your direwolf kiss server is running. look above for instruction
-```bash
-pavucontrol
-```
-look at recording tab, you will see direwolf app there, and change capture to monitor mode
-
 ```bash
 cd ~/file2afsk
 ./rx.py
