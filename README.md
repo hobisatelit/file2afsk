@@ -32,7 +32,6 @@ cd ~/file2afsk
 ```
 ### How to convert WAV into file
 make sure your direwolf kiss server is running. look above for instruction
-run pavucontrol
 ```bash
 pavucontrol
 ```
