@@ -22,7 +22,9 @@ edit tx.py, change SRC_CALL = "ABC" with your actual callsigner
 #### Config Pavucontrol
 You only need to set this up once. The goal is for the sox application (audio recorder) and direwolf (KISS server) to be able to listen to the audio output from the speakers or line out of the computer.
 
-Run Direwolf KISS server
+Open three terminal 
+
+on first terminal run Direwolf KISS server
 ```bash
 cd ~/file2afsk
 direwolf -c direwolf.conf
