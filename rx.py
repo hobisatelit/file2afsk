@@ -7,27 +7,37 @@ import socket
 import os
 import sys
 import argparse
+import subprocess
 
 # Configuration
 HOST = "localhost"
 KISS_PORT = 8001
-DEFAULT_MAX_INFO = 128
+DEFAULT_MAX_INFO = 100
+DEFAULT_RECEIVED_DIR = 'received'
+
+####################################
+VERSION = '0.02'
 
 parser = argparse.ArgumentParser(
     description="Receive multiple files over 1200 baud AFSK (multi-station, multi-file support).",
-    epilog="Files are saved as: received_[FILE_ID]_from_[SRC_CALL].bin\n"
-           "Robust frame validation: short chunks padded, oversized chunks truncated."
+    epilog="Example: ./rx.py"
 )
 parser.add_argument("--max", type=int, default=DEFAULT_MAX_INFO,
                     help=f"Expected max data bytes per frame (default: {DEFAULT_MAX_INFO}, must match transmitter)")
 
+parser.add_argument("--dir", type=str, default=DEFAULT_RECEIVED_DIR,
+                    help=f"Directory for received file (default: {DEFAULT_RECEIVED_DIR})")
+
+parser.add_argument("--version", action='version', version=f"file2afsk-%(prog)s v{VERSION} by hobisatelit <https://github.com/hobisatelit>", help="Show the version of the application")
+
 args = parser.parse_args()
 
-if args.max < 16 or args.max > 1024:
-    print("Error: --max should be between 16 and 1024")
+if args.max < 16 or args.max > 2048:
+    print("Error: --max should be between 16 and 2048")
     sys.exit(1)
 
 MAX_INFO = args.max
+RECEIVED_DIR  = args.dir
 
 # KISS constants
 FEND = 0xC0
@@ -52,12 +62,43 @@ def unescape_kiss(data):
         i += 1
     return bytes(unescaped)
 
+def ssdv_decoding(input_filename,output_filename):
+  try:
+    command = ["ssdv", "-d", input_filename, output_filename]
+    return subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+  except FileNotFoundError:
+    return None
+  except subprocess.CalledProcessError as e:
+    print(f"An error occurred while running {app_name}: {e}")
+    return None
+
+
+
+def run_app(app_name):
+    try:
+        # Attempt to run the application
+        result = subprocess.run([app_name], check=True)
+        return result
+    except FileNotFoundError:
+        # Handle the case where the application is not found
+        print(f"{app_name} is not installed or could not be found.")
+        return None
+    except subprocess.CalledProcessError as e:
+        # Handle other errors during app execution
+        print(f"An error occurred while running {app_name}: {e}")
+        return None
+
+
+os.makedirs(RECEIVED_DIR, exist_ok=True)
+
 # === KISS CONNECTION CHECK ===
 print(f"Multi-file receiver starting...")
 print(f"Expected MAX_INFO : {MAX_INFO} bytes/frame")
+print(f"RECEIVED DIR      : {os.path.join(os.getcwd(),RECEIVED_DIR)}/")
 print(f"KISS target       : {HOST}:{KISS_PORT}")
 print("Checking KISS connection to Direwolf...", end=" ")
 sys.stdout.flush()
+
 
 sock = None
 try:
@@ -80,7 +121,6 @@ except Exception as e:
 active_transfers = {}
 
 print("Receiver ready — waiting for transmissions...")
-print("Frame validation: short → zero-padded | long → truncated | corrupt → skipped\n")
 
 try:
     in_frame = False
@@ -152,14 +192,16 @@ try:
 
                         safe_src = src_call if src_call else "UNKNOWN"
                         safe_file_id = file_id if file_id else "XX"
-                        filename = f"received_{safe_file_id}_from_{safe_src}.bin"
+                        filename = f"received_from_{safe_src}_{safe_file_id}.bin"
+                        ssdvname = f"ssdv_from_{safe_src}_{safe_file_id}.jpg"
 
                         if file_id not in active_transfers:
                             active_transfers[file_id] = {
                                 'chunks': {},
                                 'highest': -1,
                                 'src': src_call,
-                                'filename': filename
+                                'filename': filename,
+                                'ssdvname': ssdvname
                             }
                             print(f"\n=== New file transfer ===")
                             print(f"   FILE_ID : {file_id}")
@@ -175,13 +217,16 @@ try:
                         else:
                             print(f"   Duplicate frame {frame_num} ignored")
 
-                        with open(transfer['filename'], 'wb') as f:
+                        with open(os.path.join(RECEIVED_DIR, transfer['filename']), 'wb') as f:
                             for i in range(transfer['highest'] + 1):
                                 f.write(transfer['chunks'].get(i, b'\x00' * MAX_INFO))
 
+                        #ssdv auto decode
+                        ssdv_process = ssdv_decoding(os.path.join(RECEIVED_DIR, transfer['filename']),os.path.join(RECEIVED_DIR, transfer['ssdvname']))
+
                         total_frames = transfer['highest'] + 1
                         received = len(transfer['chunks'])
-                        size_kb = os.path.getsize(transfer['filename']) / 1024
+                        size_kb = os.path.getsize(os.path.join(RECEIVED_DIR, transfer['filename'])) / 1024
                         print(f"   → {filename} | {received}/{total_frames} frames ({size_kb:.1f} KB)")
 
                     except Exception as e:
@@ -202,8 +247,9 @@ finally:
     print("\n=== Final received files ===")
     for t in active_transfers.values():
         filename = t['filename']
-        if os.path.exists(filename):
-            size_kb = os.path.getsize(filename) / 1024
+        #ssdvname = t['ssdvname']
+        if os.path.exists(os.path.join(RECEIVED_DIR, filename)):
+            size_kb = os.path.getsize(os.path.join(RECEIVED_DIR, filename)) / 1024
             print(f"  {filename} ({size_kb:.1f} KB)")
         else:
             print(f"  {filename} (incomplete)")
