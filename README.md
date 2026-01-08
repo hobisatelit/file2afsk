@@ -1,5 +1,5 @@
 # file2afsk
-Create AFSK 1200 modulated WAV from a binary file to be transmitted via a handheld FM radio, and vice versa. Example: send and receive SSDV image over analog AFSK 1200 modulation from terestrial or VR satellites
+Create AFSK 1200 modulated WAV from a binary file to be transmitted via a handheld FM radio, and vice versa. Example: send and receive SSDV bin image over analog AFSK 1200 modulation from terestrial or VR satellites
 
 ### Dependencies:
 Debian/Ubuntu Linux
