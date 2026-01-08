@@ -13,13 +13,20 @@ import string
 import argparse
 
 # Configuration
+# Change to your actual callsign
+SRC_CALL = "ABC"
+
+# Change to your direwolf kiss server
 HOST = "localhost"
 KISS_PORT = 8001
-SRC_CALL = "ABC"                  # Change to your actual callsign
 
 # Default values
-DEFAULT_MAX_INFO = 128
+DEFAULT_MAX_INFO = 100
 DEFAULT_DELAY = 1
+DEFAULT_AUDIO_DIR = 'audio'
+
+####################################
+VERSION = '0.02'
 
 parser = argparse.ArgumentParser(
     description="Transmit a binary file over 1200 baud AFSK using Direwolf KISS.",
@@ -30,12 +37,14 @@ parser.add_argument("--max", type=int, default=DEFAULT_MAX_INFO,
                     help=f"Max data bytes per frame (default: {DEFAULT_MAX_INFO}, recommended 100-150 for noisy channels, up to 1024 for strong links)")
 parser.add_argument("--delay", type=float, default=DEFAULT_DELAY,
                     help=f"Delay between frames in seconds (default: {DEFAULT_DELAY}, use 1-5 for noisy links, and 0.1 for strong links)")
+parser.add_argument("--dir", type=str, default=DEFAULT_AUDIO_DIR,
+                    help=f"Directory for save recorded audio wav (default: {DEFAULT_AUDIO_DIR})")
+parser.add_argument("--version", action='version', version=f"file2afsk-%(prog)s v{VERSION} by hobisatelit <https://github.com/hobisatelit>", help="Show the version of the application")
 
 args = parser.parse_args()
 
-# Updated validation: allow up to 1024
-if args.max < 16 or args.max > 1024:
-    print("Error: --max should be between 16 and 1024")
+if args.max < 16 or args.max > 2048:
+    print("Error: --max should be between 16 and 2048")
     sys.exit(1)
 if args.delay < 0:
     print("Error: --delay cannot be negative")
@@ -43,6 +52,7 @@ if args.delay < 0:
 
 MAX_INFO = args.max
 FRAME_DELAY = args.delay
+AUDIO_DIR = args.dir
 
 ALPHANUM = string.ascii_uppercase + string.digits
 
@@ -78,6 +88,7 @@ def ax25_address(call, last=False):
     return addr
 
 # === Main ===
+os.makedirs(AUDIO_DIR, exist_ok=True)
 filename = args.filename
 
 if not os.path.exists(filename):
@@ -89,13 +100,14 @@ basename = os.path.basename(filename)
 FILE_ID = generate_file_id_from_filename(basename)
 
 # WAV filename includes FILE_ID
-output_wav = f"audio_{FILE_ID}_{basename}.wav"
+output_wav = f"audio_from_{SRC_CALL}_{FILE_ID}_{MAX_INFO}bs_{FRAME_DELAY}s_{basename}.wav"
 
 print(f"Transmitting file : {basename}")
 print(f"FILE_ID           : {FILE_ID}")
 print(f"MAX_INFO          : {MAX_INFO} bytes/frame")
 print(f"Frame delay       : {FRAME_DELAY} seconds")
 print(f"Audio output      : {output_wav}")
+print(f"AUDIO DIR         : {os.path.join(os.getcwd(),AUDIO_DIR)}/")
 print(f"KISS target       : {HOST}:{KISS_PORT}\n")
 
 # === KISS CONNECTION CHECK ===
@@ -126,8 +138,8 @@ src_addr = ax25_address(SRC_CALL)
 dest_addr = ax25_address(FILE_ID, last=True)
 
 print("Starting WAV recording...")
-wav_process = start_recording(output_wav)
-time.sleep(1)
+wav_process = start_recording(os.path.join(AUDIO_DIR, output_wav))
+time.sleep(2)
 
 frame_num = 0
 offset = 0
@@ -159,14 +171,14 @@ while offset < total_bytes:
     time.sleep(FRAME_DELAY)
 
 sock.close()
-print("Press Enter to stop recording and save WAV...")
+print("\nMake sure to only press <ENTER> when the generated sound has ended\nor the audio will not be saved completely.")
 input()
 stop_recording(wav_process)
 
 time.sleep(1)
-if os.path.exists(output_wav):
-    size_mb = os.path.getsize(output_wav) / (1024 * 1024)
+if os.path.exists(os.path.join(AUDIO_DIR, output_wav)):
+    size_mb = os.path.getsize(os.path.join(AUDIO_DIR, output_wav)) / (1024 * 1024)
     print(f"WAV file saved: {output_wav} ({size_mb:.2f} MB)")
-    print(f"Ready for playback over radio (FILE_ID: {FILE_ID})")
+    print(f"Ready for playback over radio")
 else:
     print("Warning: No WAV file created — check sox/audio setup.")
